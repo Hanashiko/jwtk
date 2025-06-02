@@ -15,7 +15,7 @@ sha256sums=('284d1ff502bf527522c78cdf7ebe2cf3eb1991355cc81449dc74d96ea99ddcf7'
     '60a21faf5459b93996f566dde48d4bb44218cec03417bbcdd6c4731ef3b31bf5')
 
 build() {
-    go build -trimpath -ldflags="-s -w" -o "$pkgname" main.go
+    go build -trimpath -buildmode=pie -ldflags="-linkmode=external -extldflags=-Wl,-z,relro,-z,now -s -w" -o "$pkgname" main.go
 }
 
 package() {
