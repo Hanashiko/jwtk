@@ -104,7 +104,12 @@ func main() {
 	generateCmd.Flags().StringP("audience", "", "", "Audience claim")
 	generateCmd.Flags().StringP("name", "", "", "Name claim")
 	generateCmd.Flags().StringP("admin", "", "", "Admin claim (true/false)")
+	generateCmd.Flags().StringP("type", "", "", "Token type (access/refresh/etc)")
+	generateCmd.Flags().StringP("csrf", "", "", "CSRF token value")
+	generateCmd.Flags().StringP("fresh", "", "", "Fresh token flag (true/false)")
+	generateCmd.Flags().StringP("jti", "", "", "JWT ID (unique identifier)")
 	generateCmd.Flags().StringP("expires", "e", "", "Expiration time is the second from now")
+	generateCmd.Flags().StringP("nbf", "", "", "Not Before (seconds from now)")
 
 	genKeysCmd.Flags().StringP("outdir", "o", ".", "Output directory for the key pair")
 
@@ -159,7 +164,12 @@ func generateCommand(cmd *cobra.Command, args []string){
 	audience, _ := cmd.Flags().GetString("audience")
 	name, _ := cmd.Flags().GetString("name")
 	admin, _ := cmd.Flags().GetString("admin")
+	tokenType, _ := cmd.Flags().GetString("type")
+	csrf, _ := cmd.Flags().GetString("csrf")
+	fresh, _ := cmd.Flags().GetString("fresh")
+	jti, _ := cmd.Flags().GetString("jti")
 	expires, _ := cmd.Flags().GetString("expires")
+	nbf, _ := cmd.Flags().GetString("nbf")
 
 	claims := jwt.MapClaims{
 		"iat": time.Now().Unix(),
@@ -169,6 +179,13 @@ func generateCommand(cmd *cobra.Command, args []string){
 		expiresNum, err := strconv.Atoi(expires)
 		if err == nil {
 			claims["exp"] = time.Now().Add(time.Duration(expiresNum) * time.Second).Unix()
+		}
+	}
+
+	if nbf != "" && nbf != "none" {
+		nbfNum, err := strconv.Atoi(nbf)
+		if err == nil {
+			claims["nbf"] = time.Now().Add(time.Duration(nbfNum) * time.Second).Unix()
 		}
 	}
 
@@ -191,6 +208,23 @@ func generateCommand(cmd *cobra.Command, args []string){
 	if admin != "" && admin != "none" {
 		adminBool := strings.ToLower(admin) == "true"
 		claims["admin"] = adminBool
+	}
+
+	if tokenType != "" && tokenType != "none" {
+		claims["type"] = tokenType
+	}
+
+	if csrf != "" && csrf != "none" {
+		claims["csrf"] = csrf
+	}
+
+	if fresh != "" && fresh != "none" {
+		freshBool := strings.ToLower(fresh) == "true"
+		claims["fresh"] = freshBool
+	}
+
+	if jti != "" && jti != "none" {
+		claims["jti"] = jti
 	}
 
 	var token string
