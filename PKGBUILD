@@ -1,7 +1,7 @@
 # Maintainer: Hanashiko <hlichisper@gmail.com>
 pkgname=jwtk
 pkgver=0.1.1
-pkgrel=3
+pkgrel=1
 pkgdesc="CLI tool for decodeing, validating and generating JWT tokens"
 arch=('x86_64')
 url="https://github.com/Hanashiko/jwtk"
