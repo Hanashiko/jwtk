@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	// "strconv"
+	"strconv"
 	"strings"
 	"time"
 
@@ -89,8 +89,8 @@ func main() {
 	generateCmd.Flags().StringP("issuer", "", "", "Issuer claim")
 	generateCmd.Flags().StringP("audience", "", "", "Audience claim")
 	generateCmd.Flags().StringP("name", "", "", "Name claim")
-	generateCmd.Flags().BoolP("admin", "", false, "Admin claim (true/false)")
-	generateCmd.Flags().IntP("expires", "e", 3600, "Expiration time is the second from now")
+	generateCmd.Flags().StringP("admin", "", "", "Admin claim (true/false)")
+	generateCmd.Flags().StringP("expires", "e", "", "Expiration time is the second from now")
 
 	rootCmd.AddCommand(decodeCmd, validateCmd, generateCmd)
 	rootCmd.Execute()
@@ -142,31 +142,40 @@ func generateCommand(cmd *cobra.Command, args []string){
 	issuer, _ := cmd.Flags().GetString("issuer")
 	audience, _ := cmd.Flags().GetString("audience")
 	name, _ := cmd.Flags().GetString("name")
-	admin, _ := cmd.Flags().GetBool("admin")
-	expires, _ := cmd.Flags().GetInt("expires")
+	admin, _ := cmd.Flags().GetString("admin")
+	expires, _ := cmd.Flags().GetString("expires")
 
 	claims := jwt.MapClaims{
 		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Duration(expires) * time.Second).Unix(),
 	}
 
-	if subject != "" {
+	if expires != "none" {
+		expiresNum, err := strconv.Atoi(expires)
+		if err == nil {
+			claims["exp"] = time.Now().Add(time.Duration(expiresNum) * time.Second).Unix()
+		}
+	}
+
+	if subject != "" && subject != "none" {
 		claims["sub"] = subject
 	}
 
-	if issuer != "" {
+	if issuer != "" && issuer != "none" {
 		claims["iss"] = issuer
 	}
 
-	if audience != "" {
+	if audience != "" && audience != "none" {
 		claims["aud"] = audience
 	}
 
-	if name != "" {
+	if name != "" && name != "none" {
 		claims["name"] = name
 	}
 
-	claims["admin"] = admin
+	if admin != "" && admin != "none" {
+		adminBool := strings.ToLower(admin) == "true"
+		claims["admin"] = adminBool
+	}
 
 	var token string
 	var err error
