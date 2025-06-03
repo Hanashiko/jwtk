@@ -304,9 +304,35 @@ func tuiValidate() {
 	fmt.Println()
 	headerColor.Println("=== JWT Validator ===")
 	token := readTokenFromInput("Enter JWT token: ")
-	secret := readInput("Enter secret key (or press Enter to skip): ")
 
-	valid, err := validateJWT(token, secret, "")
+	components := parseJWT(token)
+	if !components.Valid {
+		errorColor.Printf("Invalid token: %s\n", components.Error)
+		return
+	}
+
+	alg, ok := components.Header["alg"].(string)
+	if !ok {
+		errorColor.Println("Cannot determine token algorithm")
+		return
+	}
+
+	infoColor.Printf("Detected algorithm: %s\n", alg)
+
+	var valid bool
+	var err error
+
+	switch alg {
+	case "HS256", "HS384", "HS512":
+		secret := readInput("Enter secret key: ")
+		valid, err = validateJWT(token, secret, "")
+	case "RS256", "RS384", "RS512":
+		keyfile := readInput("Enter path to public key file: ")
+		valid, err = validateJWT(token, "", keyfile)
+	default:
+		errorColor.Printf("Unsupported algorithm: %s\n", alg)
+		return
+	}
 
 	if valid {
 		successColor.Println("✓ Token is valid")
@@ -355,7 +381,7 @@ func tuiGenerate() {
 		claims["admin"] = adminBool
 	}
 
-	expires := readInput("Expires in seconds [3600] [optional]: ")
+	expires := readInput("Expires in seconds [optional]: ")
 	if expires != "" {
 		expiresNum, err := strconv.Atoi(expires)
 		if err == nil {
