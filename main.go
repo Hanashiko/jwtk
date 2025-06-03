@@ -546,7 +546,16 @@ func displayJWTComponents(components JWTComponents, cmd *cobra.Command) {
 		fmt.Println()
 		headerColor.Println("=== JWT SIGNATURE ===")
 		fmt.Printf("%s\n", components.Signature)
-	} // TODO: write else for without colors
+	} else {
+		headerJson, _ := json.MarshalIndent(components.Header, "", "  ")
+		payloadJson, _ := json.MarshalIndent(components.Payload, "", "  ")
+
+		fmt.Println("HEADER:")
+		fmt.Println(string(headerJson))
+		fmt.Println("\nPAYLOAD:")
+		fmt.Println(string(payloadJson))
+		fmt.Printf("\nSIGNATURE:\n%s\n", components.Signature)
+	}
 
 	if exp, ok := components.Payload["exp"]; ok {
 		if expFloat, ok := exp.(float64); ok {
