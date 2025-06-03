@@ -270,8 +270,9 @@ func tuiCommand(cmd *cobra.Command, args []string) {
 		fmt.Println("1. Decode JWT")
 		fmt.Println("2. Validate JWT")
 		fmt.Println("3. Generate JWT")
-		fmt.Println("4. Exit")
-		fmt.Print("\nSelect an option (1-4): ") 
+		fmt.Println("4. Generate RSA Key Pair")
+		fmt.Println("5. Exit")
+		fmt.Print("\nSelect an option (1-5): ") 
 
 		choice := readInput("")
 
@@ -283,6 +284,8 @@ func tuiCommand(cmd *cobra.Command, args []string) {
 		case "3":
 			tuiGenerate()
 		case "4":
+			tuiGenerateKeyPair()
+		case "5":
 			fmt.Println("Goodbye!")
 			return
 		default:
@@ -411,6 +414,57 @@ func tuiGenerate() {
 	
 	successColor.Println("\nGenerated JWT token:")
 	fmt.Println(token)
+}
+
+func tuiGenerateKeyPair() {
+	fmt.Println()
+	headerColor.Println("=== RSA Key Pair Generator ===")
+
+	outdir := readInput("Enter output directory [current directory]: ")
+	if outdir == "" {
+		outdir = "."
+	}
+    privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		errorColor.Printf("Failed to generate RSA key: %v\n", err)
+		return
+	}
+
+	privateFile := outdir + "/private.pem"
+	privBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+	privPem := &pem.Block{
+		Type: "RSA PRIVATE KEY",
+		Bytes: privBytes,
+	}
+	err = os.WriteFile(privateFile, pem.EncodeToMemory(privPem), 0600)
+	if err != nil {
+		errorColor.Printf("Failed to write private key: %v\n", err)
+		return
+	}
+
+	publicFile := outdir + "/public.pem"
+	pubBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		errorColor.Printf("Failed to marshal public key: %v\n", err)
+		return
+	}
+
+	pubPem := &pem.Block{
+		Type: "PUBLIC KEY",
+		Bytes: pubBytes,
+	}
+	err = os.WriteFile(publicFile, pem.EncodeToMemory(pubPem), 0644)
+	if err != nil {
+		errorColor.Printf("Failed to write public key: %v\n", err)
+		return
+	}
+
+	successColor.Printf("✓ RSA key pair generated:\n")
+	fmt.Printf("  - Private key: %s\n", privateFile)
+	fmt.Printf("  - Public key: %s\n", publicFile)
+
+	infoColor.Println("\nNote: The private key should be kept secure and never shared.")
+	infoColor.Println("      The public key can be used to verify RS256 tokens.")
 }
 
 func parseJWT(tokenString string) JWTComponents {
