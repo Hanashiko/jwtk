@@ -133,35 +133,3 @@ jwtk genkeys
 jwtk tui
 ```
 This launches an interactive menu-driven interface for all JWTK operations
-
-# Examples
-
-## Decoding a Token
-```bash
-$ jwtk decode eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-
-=== JWT HEADER ===
-{
-  "alg": "HS256",
-  "typ": "JWT"
-}
-
-=== JWT PAYLOAD ===
-{
-  "sub": "1234567890",
-  "name": "John Doe",
-  "iat": 1516239022
-}
-
-=== JWT SIGNATURE ===
-SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-```
-
-## Generating a Token
-```bash
-$ jwtk generate --algorithm HS256 --secret "mysecret" --subject "user123" --expires 3600
-
-Generated JWT token:
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDE5NzYwMDAsImlhdCI6MTcwMTk3MjQwMCwic3ViIjoidXNlcjEyMyJ9.abc123...
-```
-
