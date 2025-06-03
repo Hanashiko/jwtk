@@ -269,7 +269,7 @@ func tuiCommand(cmd *cobra.Command, args []string) {
 		headerColor.Println("=== JWTK - JWT Toolkit ===")
 		fmt.Println("1. Decode JWT")
 		fmt.Println("2. Validate JWT")
-		fmt.Println("3. GEnerate JWT")
+		fmt.Println("3. Generate JWT")
 		fmt.Println("4. Exit")
 		fmt.Print("\nSelect an option (1-4): ") 
 
@@ -280,8 +280,8 @@ func tuiCommand(cmd *cobra.Command, args []string) {
 			tuiDecode()
 		case "2":
 			tuiValidate()
-		// case "3":
-
+		case "3":
+			tuiGenerate()
 		case "4":
 			fmt.Println("Goodbye!")
 			return
@@ -311,8 +311,80 @@ func tuiValidate() {
 	if valid {
 		successColor.Println("✓ Token is valid")
 	} else {
-		errorColor.Println("✗ Token is invalid: %v\n",err)
+		errorColor.Printf("✗ Token is invalid: %v\n",err)
 	}
+}
+
+func tuiGenerate() {
+	fmt.Println()
+	headerColor.Println("=== JWT Generator ===")
+
+	fmt.Println("1. HS256 (HMAC)")
+	fmt.Println("2. RS256 (RSA)")
+	fmt.Print("Select algorithm (1-2): ")
+
+	algChoice := readInput("")
+
+	claims := jwt.MapClaims{
+		"iat": time.Now().Unix(),
+	}
+
+	subject := readInput("Subject (sub) [optional]: ")
+	if subject != "" {
+		claims["sub"] = subject
+	}
+
+	issuer := readInput("Issuer (iss) [optional]: ")
+	if issuer != "" {
+		claims["iss"] = issuer
+	}
+
+	audience := readInput("Audience (aud) [optional]: ")
+	if audience != "" {
+		claims["aud"] = audience
+	}
+
+	name := readInput("Name (name) [optional]: ")
+	if name != "" {
+		claims["name"]  = name
+	}
+
+	admin := readInput("Admin (admin) [optional]: ")
+	if admin != "" {
+		adminBool := strings.ToLower(admin) == "true"
+		claims["admin"] = adminBool
+	}
+
+	expires := readInput("Expires in seconds [3600] [optional]: ")
+	if expires != "" {
+		expiresNum, err := strconv.Atoi(expires)
+		if err == nil {
+			claims["exp"] = time.Now().Add(time.Duration(expiresNum) * time.Second).Unix()
+		}
+	}
+
+	var token string
+	var err error
+
+	switch algChoice {
+	case "1":
+		secret := readInput("Enter secret key: ")
+		token, err = generateHS256Token(claims, secret)
+	case "2":
+		keyfile := readInput("Enter path to private key file: ")
+		token, err = generateRS256Token(claims, keyfile)
+	default:
+		errorColor.Println("Invalid algorithm choice")
+		return
+	}
+
+	if err != nil {
+		errorColor.Printf("Error generating token: %v\n", err)
+		return
+	}
+	
+	successColor.Println("\nGenerated JWT token:")
+	fmt.Println(token)
 }
 
 func parseJWT(tokenString string) JWTComponents {
