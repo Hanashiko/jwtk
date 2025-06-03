@@ -418,11 +418,40 @@ func tuiGenerate() {
 		claims["admin"] = adminBool
 	}
 
+	tokenType := readInput("Token type (type) (access/refresh/etc) [optional]: ")
+	if tokenType != "" {
+		claims["type"] = tokenType
+	}
+
+	csrf := readInput("CSRF token value (csrf) [optional]: ")
+	if csrf != "" {
+		claims["csrf"] = csrf
+	}
+
+	fresh := readInput("Fresh token flag (fresh) (true/false) [optoinal]: ")
+	if fresh != "" {
+		freshBool := strings.ToLower(fresh) == "true"
+		claims["fresh"] = freshBool
+	}
+
+	jti := readInput("JWT ID (jti) (unique identifier) [optional]: ")
+	if jti != "" {
+		claims["jti"] = jti
+	}
+
 	expires := readInput("Expires in seconds [optional]: ")
 	if expires != "" {
 		expiresNum, err := strconv.Atoi(expires)
 		if err == nil {
 			claims["exp"] = time.Now().Add(time.Duration(expiresNum) * time.Second).Unix()
+		}
+	}
+
+	nbf := readInput("Not before in seconds [optional]: ")
+	if nbf != "" {
+		nbfNum, err := strconv.Atoi(nbf)
+		if err == nil {
+			claims["nbf"] = time.Now().Add(time.Duration(nbfNum) * time.Second).Unix()
 		}
 	}
 
