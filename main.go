@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	// "crypto/rand"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
@@ -75,6 +75,13 @@ func main() {
 		Run: generateCommand,
 	}
 
+	var genKeysCmd = &cobra.Command {
+		Use: "genkeys",
+		Short: "Generate RSA key pair",
+		Long: "Generate an RSA private and public key pair for RS256 signing and verification",
+		Run: generateKeyPairCommand,
+	}
+
 	decodeCmd.Flags().BoolP("raw", "r", false, "Show raw JSON without colors")
 	decodeCmd.Flags().StringP("secret", "s", "", "Secret key for signature validation")
 	decodeCmd.Flags().StringP("keyfile", "k", "", "Path to key file for signature validation")
@@ -92,7 +99,9 @@ func main() {
 	generateCmd.Flags().StringP("admin", "", "", "Admin claim (true/false)")
 	generateCmd.Flags().StringP("expires", "e", "", "Expiration time is the second from now")
 
-	rootCmd.AddCommand(decodeCmd, validateCmd, generateCmd)
+	genKeysCmd.Flags().StringP("outdir", "o", ".", "Output directory for the key pair")
+
+	rootCmd.AddCommand(decodeCmd, validateCmd, generateCmd, genKeysCmd)
 	rootCmd.Execute()
 }
 
@@ -203,6 +212,48 @@ func generateCommand(cmd *cobra.Command, args []string){
 
 	successColor.Println("Generated JWT token:")
 	fmt.Println(token)
+}
+
+func generateKeyPairCommand(cmd *cobra.Command, args []string) {
+	outdir, _ := cmd.Flags().GetString("outdir")
+
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		errorColor.Printf("Failed to generate RSA key: %v\n", err)
+		return
+	}
+
+	privateFile := outdir + "/private.pem"
+	privBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+	privPem := &pem.Block{
+		Type: "RSA PRIVATE KEY",
+		Bytes: privBytes,
+	}
+	err = os.WriteFile(privateFile, pem.EncodeToMemory(privPem), 0600)
+	if err != nil {
+		errorColor.Printf("Failed to write private key: %v\n",err)
+		return
+	}
+
+	publicFile := outdir + "/public.pem"
+	pubBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		errorColor.Printf("Failed to marshal public key: %v\n", err)
+		return
+	}
+	pubPem := &pem.Block{
+		Type: "PUBLIC KEY",
+		Bytes: pubBytes,
+	}
+	err = os.WriteFile(publicFile, pem.EncodeToMemory(pubPem), 0644)
+	if err != nil {
+		errorColor.Printf("Failed to write public key: %v\n",err)
+		return
+	}
+
+	successColor.Printf("✓ RSA key pair generated:\n")
+	fmt.Printf("  - Private key: %s\n", privateFile)
+	fmt.Printf("  - Public key: %s\n", publicFile)
 }
 
 func parseJWT(tokenString string) JWTComponents {
