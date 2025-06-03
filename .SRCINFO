@@ -1,6 +1,6 @@
 pkgbase = jwtk
 	pkgdesc = CLI tool for decodeing, validating and generating JWT tokens
-	pkgver = 0.1.1
+	pkgver = 0.1.2
 	pkgrel = 1
 	url = https://github.com/Hanashiko/jwtk
 	arch = x86_64
