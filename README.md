@@ -98,7 +98,12 @@ jwtk generate
  - `--audience`: Audience claim (aud)
  - `--name`: Name claim
  - `--admin`: Admin claim (true/false)
+ - `--type`: Token type (access/refresh/etc)
+ - `--csrf`: CSRF token value
+ - `--fresh`: Fresh token flag (true/false)
+ - `--jti`: JWT ID (unique identifier)
  - `-e, --expires`: Expiration time in seconds from now
+ - `-n, --nbf`: Not Before (seconds from now)
 
 #### Example:
 ```bash
