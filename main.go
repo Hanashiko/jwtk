@@ -278,8 +278,8 @@ func tuiCommand(cmd *cobra.Command, args []string) {
 		switch choice {
 		case "1":
 			tuiDecode()
-		// case "2":
-		
+		case "2":
+			tuiValidate()
 		// case "3":
 
 		case "4":
@@ -298,6 +298,21 @@ func tuiDecode() {
 
 	components := parseJWT(token)
 	displayJWTComponents(components, nil)
+}
+
+func tuiValidate() {
+	fmt.Println()
+	headerColor.Println("=== JWT Validator ===")
+	token := readTokenFromInput("Enter JWT token: ")
+	secret := readInput("Enter secret key (or press Enter to skip): ")
+
+	valid, err := validateJWT(token, secret, "")
+
+	if valid {
+		successColor.Println("✓ Token is valid")
+	} else {
+		errorColor.Println("✗ Token is invalid: %v\n",err)
+	}
 }
 
 func parseJWT(tokenString string) JWTComponents {
