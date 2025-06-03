@@ -82,6 +82,13 @@ func main() {
 		Run: generateKeyPairCommand,
 	}
 
+	var tuiCmd = &cobra.Command {
+		Use: "tui",
+		Short: "Launch interactive TUI mode",
+		Long: "Launch an interactive Terminal User INterface for JWT operations",
+		Run: tuiCommand,
+	}
+
 	decodeCmd.Flags().BoolP("raw", "r", false, "Show raw JSON without colors")
 	decodeCmd.Flags().StringP("secret", "s", "", "Secret key for signature validation")
 	decodeCmd.Flags().StringP("keyfile", "k", "", "Path to key file for signature validation")
@@ -101,7 +108,7 @@ func main() {
 
 	genKeysCmd.Flags().StringP("outdir", "o", ".", "Output directory for the key pair")
 
-	rootCmd.AddCommand(decodeCmd, validateCmd, generateCmd, genKeysCmd)
+	rootCmd.AddCommand(decodeCmd, validateCmd, generateCmd, genKeysCmd, tuiCmd)
 	rootCmd.Execute()
 }
 
@@ -254,6 +261,43 @@ func generateKeyPairCommand(cmd *cobra.Command, args []string) {
 	successColor.Printf("✓ RSA key pair generated:\n")
 	fmt.Printf("  - Private key: %s\n", privateFile)
 	fmt.Printf("  - Public key: %s\n", publicFile)
+}
+
+func tuiCommand(cmd *cobra.Command, args []string) {
+	for {
+		fmt.Println()
+		headerColor.Println("=== JWTK - JWT Toolkit ===")
+		fmt.Println("1. Decode JWT")
+		fmt.Println("2. Validate JWT")
+		fmt.Println("3. GEnerate JWT")
+		fmt.Println("4. Exit")
+		fmt.Print("\nSelect an option (1-4): ") 
+
+		choice := readInput("")
+
+		switch choice {
+		case "1":
+			tuiDecode()
+		// case "2":
+		
+		// case "3":
+
+		case "4":
+			fmt.Println("Goodbye!")
+			return
+		default:
+			errorColor.Println("Invalid option. Please select 1-4.")
+		}
+	}
+}
+
+func tuiDecode() {
+	fmt.Println()
+	headerColor.Println("=== JWT Decoder ===")
+	token := readTokenFromInput("Enter JWT token: ")
+
+	components := parseJWT(token)
+	displayJWTComponents(components, nil)
 }
 
 func parseJWT(tokenString string) JWTComponents {
