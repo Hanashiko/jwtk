@@ -603,6 +603,18 @@ func displayJWTComponents(components JWTComponents, cmd *cobra.Command) {
 		}
 	}
 
+	if nbf, ok := components.Payload["nbf"]; ok {
+		if nbfFloat, ok := nbf.(float64); ok {
+			nbfTime := time.Unix(int64(nbfFloat), 0)
+			fmt.Printf("\n")
+			if time.Now().Before(nbfTime) {
+				errorColor.Printf("⚠ Token not yet valid (active at: %s)\n", nbfTime.Format(time.RFC3339))
+			} else {
+				infoColor.Printf("i Token become valid at: %s\n", nbfTime.Format(time.RFC3339))
+			}
+		}
+	}
+
 	if cmd != nil {
 		secret, _ := cmd.Flags().GetString("secret")
 		keyfile, _ := cmd.Flags().GetString("keyfile")
