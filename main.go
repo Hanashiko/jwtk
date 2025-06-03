@@ -109,7 +109,7 @@ func main() {
 	generateCmd.Flags().StringP("fresh", "", "", "Fresh token flag (true/false)")
 	generateCmd.Flags().StringP("jti", "", "", "JWT ID (unique identifier)")
 	generateCmd.Flags().StringP("expires", "e", "", "Expiration time is the second from now")
-	generateCmd.Flags().StringP("nbf", "", "", "Not Before (seconds from now)")
+	generateCmd.Flags().StringP("nbf", "n", "", "Not Before (seconds from now)")
 
 	genKeysCmd.Flags().StringP("outdir", "o", ".", "Output directory for the key pair")
 
