@@ -88,6 +88,8 @@ func main() {
 	generateCmd.Flags().StringP("subject", "", "", "Subject claim")
 	generateCmd.Flags().StringP("issuer", "", "", "Issuer claim")
 	generateCmd.Flags().StringP("audience", "", "", "Audience claim")
+	generateCmd.Flags().StringP("name", "", "", "Name claim")
+	generateCmd.Flags().BoolP("admin", "", false, "Admin claim (true/false)")
 	generateCmd.Flags().IntP("expires", "e", 3600, "Expiration time is the second from now")
 
 	rootCmd.AddCommand(decodeCmd, validateCmd, generateCmd)
@@ -139,6 +141,8 @@ func generateCommand(cmd *cobra.Command, args []string){
 	subject, _ := cmd.Flags().GetString("subject")
 	issuer, _ := cmd.Flags().GetString("issuer")
 	audience, _ := cmd.Flags().GetString("audience")
+	name, _ := cmd.Flags().GetString("name")
+	admin, _ := cmd.Flags().GetBool("admin")
 	expires, _ := cmd.Flags().GetInt("expires")
 
 	claims := jwt.MapClaims{
@@ -157,6 +161,12 @@ func generateCommand(cmd *cobra.Command, args []string){
 	if audience != "" {
 		claims["aud"] = audience
 	}
+
+	if name != "" {
+		claims["name"] = name
+	}
+
+	claims["admin"] = admin
 
 	var token string
 	var err error
