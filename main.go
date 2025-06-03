@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	// "crypto/rand"
-	// "crypto/rsa"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	// "strconv"
+	"strconv"
 	"strings"
 	"time"
 
@@ -68,6 +68,13 @@ func main() {
 		Run: validateCommand,
 	}
 
+	var generateCmd = &cobra.Command{
+		Use: "generate",
+		Short: "Generate a new JWT token",
+		Long: "Generate a new JWT token with specified claims and algorithm",
+		Run: generateCommand,
+	}
+
 	decodeCmd.Flags().BoolP("raw", "r", false, "Show raw JSON without colors")
 	decodeCmd.Flags().StringP("secret", "s", "", "Secret key for signature validation")
 	decodeCmd.Flags().StringP("keyfile", "k", "", "Path to key file for signature validation")
@@ -75,7 +82,17 @@ func main() {
 	validateCmd.Flags().StringP("secret", "s", "", "Secret key for validation")
 	validateCmd.Flags().StringP("keyfile", "k", "", "Path to key file for validation")
 
-	rootCmd.AddCommand(decodeCmd, validateCmd)
+	generateCmd.Flags().StringP("algorithm", "a", "HS256", "Signing algorithm (HS256, RS256)")
+	generateCmd.Flags().StringP("secret", "s", "", "Secret key for HS256")
+	generateCmd.Flags().StringP("keyfile", "k", "", "Path to private key file for RS256")
+	generateCmd.Flags().StringP("subject", "", "", "Subject claim")
+	generateCmd.Flags().StringP("issuer", "", "", "Issuer claim")
+	generateCmd.Flags().StringP("audience", "", "", "Audience claim")
+	generateCmd.Flags().StringP("name", "", "", "Name claim")
+	generateCmd.Flags().StringP("admin", "", "", "Admin claim (true/false)")
+	generateCmd.Flags().StringP("expires", "e", "", "Expiration time is the second from now")
+
+	rootCmd.AddCommand(decodeCmd, validateCmd, generateCmd)
 	rootCmd.Execute()
 }
 
@@ -115,6 +132,77 @@ func validateCommand(cmd *cobra.Command, args []string) {
 	} else {
 		errorColor.Printf("✗ Token is invalid: %v\n",err)
 	}
+}
+
+func generateCommand(cmd *cobra.Command, args []string){
+	algorithm, _ := cmd.Flags().GetString("algorithm")
+	secret, _ := cmd.Flags().GetString("secret")
+	keyfile, _ := cmd.Flags().GetString("keyfile")
+	subject, _ := cmd.Flags().GetString("subject")
+	issuer, _ := cmd.Flags().GetString("issuer")
+	audience, _ := cmd.Flags().GetString("audience")
+	name, _ := cmd.Flags().GetString("name")
+	admin, _ := cmd.Flags().GetString("admin")
+	expires, _ := cmd.Flags().GetString("expires")
+
+	claims := jwt.MapClaims{
+		"iat": time.Now().Unix(),
+	}
+
+	if expires != "none" {
+		expiresNum, err := strconv.Atoi(expires)
+		if err == nil {
+			claims["exp"] = time.Now().Add(time.Duration(expiresNum) * time.Second).Unix()
+		}
+	}
+
+	if subject != "" && subject != "none" {
+		claims["sub"] = subject
+	}
+
+	if issuer != "" && issuer != "none" {
+		claims["iss"] = issuer
+	}
+
+	if audience != "" && audience != "none" {
+		claims["aud"] = audience
+	}
+
+	if name != "" && name != "none" {
+		claims["name"] = name
+	}
+
+	if admin != "" && admin != "none" {
+		adminBool := strings.ToLower(admin) == "true"
+		claims["admin"] = adminBool
+	}
+
+	var token string
+	var err error
+
+	switch algorithm {
+	case "HS256":
+		if secret == "" {
+			secret = readInput("Enter secret key: ")
+		}
+		token, err = generateHS256Token(claims, secret)
+	case "RS256":
+		if keyfile == "" {
+			keyfile = readInput("Enter path to private key file: ")
+		}
+		token, err = generateRS256Token(claims, keyfile)
+	default:
+		errorColor.Printf("Unsupported algorithm: %s\n", algorithm)
+		return
+	}
+
+	if err != nil {
+		errorColor.Printf("Error generating token: %v\n", err)
+		return
+	}
+
+	successColor.Println("Generated JWT token:")
+	fmt.Println(token)
 }
 
 func parseJWT(tokenString string) JWTComponents {
@@ -321,6 +409,47 @@ func validateJWT(tokenString, secret, keyfile string) (bool, error) {
 	}
 
 	return token.Valid, nil
+}
+
+func generateHS256Token(claims jwt.MapClaims, secret string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(secret))
+}
+
+func generateRS256Token(claims jwt.MapClaims, keyfile string) (string, error) {
+	keyData, err := ioutil.ReadFile(keyfile)
+	if err != nil {
+		return "", fmt.Errorf("error reading key file: %v", err)
+	}
+
+	block, _ := pem.Decode(keyData)
+	if block == nil {
+		return "", fmt.Errorf("failed to parse PEM block")
+	}
+
+	var privateKey *rsa.PrivateKey
+	if block.Type == "RSA PRIVATE KEY" {
+		privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	} else if block.Type == "PRIVATE KEY" {
+		key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err != nil {
+			return "", err
+		}
+		var ok bool
+		privateKey, ok = key.(*rsa.PrivateKey)
+		if !ok {
+			return "", fmt.Errorf("not an RSA private key")
+		}
+	} else {
+		return "", fmt.Errorf("unsupported key type: %s", block.Type)
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	return token.SignedString(privateKey)
 }
 
 func readInput(prompt string) string {
