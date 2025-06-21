@@ -110,6 +110,7 @@ func main() {
 	generateCmd.Flags().StringP("jti", "", "", "JWT ID (unique identifier)")
 	generateCmd.Flags().StringP("expires", "e", "", "Expiration time is the second from now")
 	generateCmd.Flags().StringP("nbf", "n", "", "Not Before (seconds from now)")
+	generateCmd.Flags().StringP("secret_key", "", "", "Custom secret_key claim")
 
 	genKeysCmd.Flags().StringP("outdir", "o", ".", "Output directory for the key pair")
 
@@ -170,6 +171,7 @@ func generateCommand(cmd *cobra.Command, args []string){
 	jti, _ := cmd.Flags().GetString("jti")
 	expires, _ := cmd.Flags().GetString("expires")
 	nbf, _ := cmd.Flags().GetString("nbf")
+	secretKey, _ := cmd.Flags().GetString("secret_key")
 
 	claims := jwt.MapClaims{
 		"iat": time.Now().Unix(),
@@ -225,6 +227,10 @@ func generateCommand(cmd *cobra.Command, args []string){
 
 	if jti != "" && jti != "none" {
 		claims["jti"] = jti
+	}
+
+	if secretKey != "" && secretKey != "none" {
+		claims["secret_key"] = secretKey
 	}
 
 	var token string
