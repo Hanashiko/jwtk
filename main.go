@@ -461,6 +461,11 @@ func tuiGenerate() {
 		}
 	}
 
+	key := readInput("Key claim (key) [optional]: ")
+	if key != "" {
+		claims["key"] = key
+	}
+
 	var token string
 	var err error
 
