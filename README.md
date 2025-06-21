@@ -102,6 +102,7 @@ jwtk generate
  - `--csrf`: CSRF token value
  - `--fresh`: Fresh token flag (true/false)
  - `--jti`: JWT ID (unique identifier)
+ - `--key`: Arbitary key claim (can be used to embed key ID or custom value)
  - `-e, --expires`: Expiration time in seconds from now
  - `-n, --nbf`: Not Before (seconds from now)
 
@@ -109,7 +110,7 @@ jwtk generate
 ```bash
 jwtk generate --algorithm HS256 --secret "your-256-bit-secret" --subject "user123" --expires 3600
 
-jwtk generate --algorithm RS256 --keyfile private.pem --issuer "myapp" --audience "api.example.com"
+jwtk generate --algorithm RS256 --keyfile private.pem --issuer "myapp" --audience "api.example.com" --key "12345"
 
 jwtk generate --algorithm HS256 --secret "your-256-bit-secret" --subject "1234567890" --name "John Doe" --admin true --expires 604800
 
