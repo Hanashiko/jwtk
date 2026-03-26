@@ -38,7 +38,7 @@ jobs:
       - name: Setup build user (makepkg cant use by root)
         run: |
           useradd -m builder
-          chown -R build:builder .
+          chown -R builder:builder .
 
       - name: Test makepkg
         run: su builder -c "makepkg -f --noconfirm"
