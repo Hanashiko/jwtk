@@ -17,7 +17,7 @@ jobs:
       - name: Update PKGBUILD version
         run: |
           sed -i "s/^pkgver=.*/pkgver=${{ steps.version.outputs.value }}/" PKGBUILD
-          sed -i "s/^pkgrel=.*pkgrel=1/" PKGBUILD
+          sed -i "s/^pkgrel=.*/pkgrel=1/" PKGBUILD
 
       - name: Deploy to AUR
         uses: KSXGitHub/github-actions-deploy-aur@v3.0.1
