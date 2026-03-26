@@ -4,6 +4,10 @@ on:
     tags:
       - 'v*'
 
+concurrency:
+  group: aur-publish
+  cancel-in-progress: false
+
 jobs:
   publish:
     name: Publish to AUR
@@ -16,7 +20,7 @@ jobs:
       - name: Verify tag is on master
         run: |
           git fetch origin master
-          git merge-base --is-ancestor ${{ github-sha }} origin/master || \
+          git merge-base --is-ancestor ${{ github.sha }} origin/master || \
           (echo "::error::Tag must be created from master branch" && exit 1)
 
       - name: Extract version

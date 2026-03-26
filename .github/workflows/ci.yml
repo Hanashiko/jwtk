@@ -39,9 +39,18 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install build deps
-        run: pacman -Sy --noconfirm go base-devel
+        run: pacman -Syu --noconfirm go base-devel
 
-      - name: Setup build user (makepkg cant use by root)
+      - name: Create source tarball from current code
+        run: |
+          VER=$(grep '^pkgver=' PKGBUILD | cut -d= -f2)
+          mkdir -p "/tmp/jwtk-${VER}"
+          cp main.go go.mod go.sum LICENSE "/tmp/jwtk-${VER}"
+          tar -czf "jwtk-${VER}.tar.gz" -C /tmp "jwtk-${VER}"
+          HASH=$(sha256sum "jwtk-${VER}.tar.gz" | awk '{print $1}')
+          sed -i "s|sha256sums=.*|sha256sums=('${HASH}'|" PKGBUILD)
+
+      - name: Setup build user
         run: |
           useradd -m builder
           chown -R builder:builder .
