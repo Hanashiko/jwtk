@@ -1,0 +1,60 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+      - 'feat/**'
+      - 'fix/**'
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Smoke Test
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: go build -trimpath -o jwtk .
+
+      - name: Smoke test
+        run: |
+          ./jwtk --help
+          ./jwtk decode eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I8PLkSTyiSN8ig
+
+  makepkg-test:
+    name: AUR Build Test (Arch VM)
+    runs-on: ubuntu-22.04
+    container:
+      image: archlinux:latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install build deps
+        run: pacman -Syu --noconfirm go base-devel
+
+      - name: Create source tarball from current code
+        run: |
+          VER=$(grep '^pkgver=' PKGBUILD | cut -d= -f2)
+          mkdir -p "/tmp/jwtk-${VER}"
+          cp main.go go.mod go.sum LICENSE "/tmp/jwtk-${VER}"
+          tar -czf "jwtk-${VER}.tar.gz" -C /tmp "jwtk-${VER}"
+          HASH=$(sha256sum "jwtk-${VER}.tar.gz" | awk '{print $1}')
+          sed -i "s|sha256sums=.*|sha256sums=('${HASH}')|" PKGBUILD
+
+      - name: Setup build user
+        run: |
+          useradd -m builder
+          chown -R builder:builder .
+
+      - name: Test makepkg
+        run: su builder -c "makepkg -f --noconfirm"
+
