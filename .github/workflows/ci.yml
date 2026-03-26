@@ -48,7 +48,7 @@ jobs:
           cp main.go go.mod go.sum LICENSE "/tmp/jwtk-${VER}"
           tar -czf "jwtk-${VER}.tar.gz" -C /tmp "jwtk-${VER}"
           HASH=$(sha256sum "jwtk-${VER}.tar.gz" | awk '{print $1}')
-          sed -i "s|sha256sums=.*|sha256sums=('${HASH}'|" PKGBUILD)
+          sed -i "s|sha256sums=.*|sha256sums=('${HASH}')|" PKGBUILD
 
       - name: Setup build user
         run: |
