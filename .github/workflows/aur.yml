@@ -1,0 +1,31 @@
+name: AUR Publish
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    name: Publish to AUR
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Extract version
+        id: version
+        run: echo "value=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Update PKGBUILD version
+        run: |
+          sed -i "s/^pkgver=.*/pkgver=${{ steps.version.outputs.value }}/" PKGBUILD
+          sed -i "s/^pkgrel=.*pkgrel=1/" PKGBUILD
+
+      - name: Deploy to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v3.0.1
+        with:
+          pkgname: jwtk
+          pkgbuild: ./PKGBUILD
+          commit_username: Hanashiko
+          commit_email: hlichisper@gmail.com
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "update to ${{ github.ref_name }}"
+          updpkgsums: true

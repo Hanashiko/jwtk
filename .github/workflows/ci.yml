@@ -1,0 +1,45 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Smoke Test
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: go build -trimpath -o jwtk .
+
+      - name: Smoke test
+        run: |
+          ./jwtk --help
+          ./jwtk decode eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I8PLkSTyiSN8ig
+
+  makepkg-test:
+    name: AUR Build Test (Arch VM)
+    runs-on: ubuntu-22.04
+    container:
+      image: archlinux:latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install build deps
+        run: pacman -Sy --noconfirm go base-devel
+
+      - name: Setup build user (makepkg cant use by root)
+        run: |
+          useradd -m builder
+          chown -R build:builder .
+
+      - name: Test makepkg
+        run: su builder -c "makepkg -f --noconfirm"
+
