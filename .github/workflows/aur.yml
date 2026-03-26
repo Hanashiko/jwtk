@@ -10,6 +10,15 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag is on master
+        run: |
+          git fetch origin master
+          git merge-base --is-ancestor ${{ github-sha }} origin/master || \
+          (echo "::error::Tag must be created from master branch" && exit 1)
+
       - name: Extract version
         id: version
         run: echo "value=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT

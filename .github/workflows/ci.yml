@@ -1,7 +1,13 @@
 name: CI
 on:
   push:
+    branches:
+      - master
+      - 'feat/**'
+      - 'fix/**'
   pull_request:
+    branches:
+      - master
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
